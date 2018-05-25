@@ -41,8 +41,8 @@ public class Ship {
 		revThruster.render();
 
 		if (main.loaded)
-			main.thrustersSound.stop();
-		main.thrustersPlaying = false;
+			main.sound.thrustersSound.stop();
+		main.sound.thrustersPlaying = false;
 		hyperCounter = 0;
 	}
 
@@ -55,8 +55,8 @@ public class Ship {
 		if (shipsLeft > 0)
 			shipsLeft--;
 		if (main.loaded)
-			main.thrustersSound.stop();
-		main.thrustersPlaying = false;
+			main.sound.thrustersSound.stop();
+		main.sound.thrustersPlaying = false;
 	}
 
 	

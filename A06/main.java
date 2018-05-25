@@ -91,13 +91,13 @@ public class main extends Applet implements Runnable, KeyListener {
 	static Ufo ufo = new Ufo();
 	static Missle missle = new Missle();
 	static Ship ship = new Ship();
+	static Sound sound = new Sound();
 
 	// Flags for game state and options.
 
 	static boolean loaded = false;
 	static boolean paused;
 	static boolean playing;
-	static boolean sound;
 
 	// Key flags.
 
@@ -111,27 +111,6 @@ public class main extends Applet implements Runnable, KeyListener {
 
 	int ufoPassesLeft; // Counter for number of flying saucer passes.
 	int ufoCounter; // Timer counter used to track each flying saucer pass.
-
-	// Sound clips.
-
-	static AudioClip crashSound;
-	static AudioClip explosionSound;
-	static AudioClip fireSound;
-	static AudioClip missleSound;
-	static AudioClip saucerSound;
-	static AudioClip thrustersSound;
-	static AudioClip warpSound;
-
-	// Flags for looping sound clips.
-
-	static boolean thrustersPlaying;
-	static boolean saucerPlaying;
-	static boolean misslePlaying;
-
-	// Counter and total used to track the loading of the sound clips.
-
-	int clipTotal = 0;
-	int clipsLoaded = 0;
 
 	// Off screen image.
 
@@ -252,7 +231,7 @@ public class main extends Applet implements Runnable, KeyListener {
 		// Initialize game data and put us in 'game over' mode.
 
 		highScore = 0;
-		sound = true;
+		sound.setSound(true);
 		explosions.detail = true;
 		initGame();
 		endGame();
@@ -274,6 +253,7 @@ public class main extends Applet implements Runnable, KeyListener {
 	    missle.stopMissle();
 	    asteroids.initAsteroids();
 	    explosions.initExplosions();
+	    sound.loadSounds();
 	    playing = true;
 	    paused = false;
 	    photons.photonTime = System.currentTimeMillis();
@@ -288,6 +268,7 @@ public class main extends Applet implements Runnable, KeyListener {
 		    ship.stopShip();
 		    ufo.stopUfo();
 		    missle.stopMissle();
+		    sound.stopAllSound();
 	}
 
 	public void updateShip() {
@@ -413,7 +394,7 @@ public class main extends Applet implements Runnable, KeyListener {
 		// Run thread for loading sounds.
 
 		if (!loaded && Thread.currentThread() == loadThread) {
-			loadSounds();
+			sound.loadSounds();
 			loaded = true;
 			loadThread.stop();
 		}
@@ -469,71 +450,6 @@ public class main extends Applet implements Runnable, KeyListener {
 		    }
 
 
-
-	public void loadSounds() {
-
-		// Load all sound clips by playing and immediately stopping them. Update
-		// counter and total for display.
-
-		try {
-			crashSound = getAudioClip(new URL(getCodeBase(), "crash.au"));
-			clipTotal++;
-			explosionSound = getAudioClip(new URL(getCodeBase(), "explosion.au"));
-			clipTotal++;
-			fireSound = getAudioClip(new URL(getCodeBase(), "fire.au"));
-			clipTotal++;
-			missleSound = getAudioClip(new URL(getCodeBase(), "missle.au"));
-			clipTotal++;
-			saucerSound = getAudioClip(new URL(getCodeBase(), "saucer.au"));
-			clipTotal++;
-			thrustersSound = getAudioClip(new URL(getCodeBase(), "thrusters.au"));
-			clipTotal++;
-			warpSound = getAudioClip(new URL(getCodeBase(), "warp.au"));
-			clipTotal++;
-		} catch (MalformedURLException e) {
-		}
-
-		try {
-			crashSound.play();
-			crashSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			explosionSound.play();
-			explosionSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			fireSound.play();
-			fireSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			missleSound.play();
-			missleSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			saucerSound.play();
-			saucerSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			thrustersSound.play();
-			thrustersSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			warpSound.play();
-			warpSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-		} catch (InterruptedException e) {
-		}
-	}
-
-
 	public void keyPressed(KeyEvent e) {
 
 		char c;
@@ -549,17 +465,17 @@ public class main extends Applet implements Runnable, KeyListener {
 		if (e.getKeyCode() == KeyEvent.VK_DOWN)
 			down = true;
 
-		if ((up || down) && ship.ship.active && !thrustersPlaying) {
-			if (sound && !paused)
-				thrustersSound.loop();
-			thrustersPlaying = true;
+		if ((up || down) && ship.ship.active && !sound.thrustersPlaying) {
+			if (sound.getSound() && !paused)
+				sound.thrustersSound.loop();
+			sound.thrustersPlaying = true;
 		}
 
 		// Spacebar: fire a photon and start its counter.
 
 		if (e.getKeyChar() == ' ' && ship.ship.active) {
-			if (sound & !paused)
-				fireSound.play();
+			if (sound.getSound() & !paused)
+				sound.fireSound.play();
 			  photons.photonTime = System.currentTimeMillis();
 		      photons.photonIndex++;
 		      if ( photons.photonIndex >= Constants.MAX_SHOTS)
@@ -583,52 +499,32 @@ public class main extends Applet implements Runnable, KeyListener {
 		    	ship.ship.x = Math.random() * AsteroidsSprite.width;
 		    	ship.ship.y = Math.random() * AsteroidsSprite.height;
 		      ship.hyperCounter = Constants.HYPER_COUNT;
-		      if (sound & !paused)
-		        warpSound.play();
+		      if (sound.getSound() & !paused)
+		        sound.warpSound.play();
 		    }
 
 		// 'P' key: toggle pause mode and start or stop any active looping sound
 		// clips.
 
 		if (c == 'p') {
-			if (paused) {
-				if (sound && misslePlaying)
-					missleSound.loop();
-				if (sound && saucerPlaying)
-					saucerSound.loop();
-				if (sound && thrustersPlaying)
-					thrustersSound.loop();
-			} else {
-				if (misslePlaying)
-					missleSound.stop();
-				if (saucerPlaying)
-					saucerSound.stop();
-				if (thrustersPlaying)
-					thrustersSound.stop();
-			}
+			sound.pause(paused);
 			paused = !paused;
 		}
 
 		// 'M' key: toggle sound on or off and stop any looping sound clips.
 
 		if (c == 'm' && loaded) {
-			if (sound) {
-				crashSound.stop();
-				explosionSound.stop();
-				fireSound.stop();
-				missleSound.stop();
-				saucerSound.stop();
-				thrustersSound.stop();
-				warpSound.stop();
+			if (sound.getSound()) {
+				sound.stopAllSound();
 			} else {
-				if (misslePlaying && !paused)
-					missleSound.loop();
-				if (saucerPlaying && !paused)
-					saucerSound.loop();
-				if (thrustersPlaying && !paused)
-					thrustersSound.loop();
+				if (sound.misslePlaying && !paused)
+					sound.missleSound.loop();
+				if (sound.saucerPlaying && !paused)
+					sound.saucerSound.loop();
+				if (sound.thrustersPlaying && !paused)
+					sound.thrustersSound.loop();
 			}
-			sound = !sound;
+			sound.setSound(!sound.getSound());
 		}
 
 		// 'D' key: toggle graphics detail on or off.
@@ -663,9 +559,9 @@ public class main extends Applet implements Runnable, KeyListener {
 		if (e.getKeyCode() == KeyEvent.VK_DOWN)
 			down = false;
 
-		if (!up && !down && thrustersPlaying) {
-			thrustersSound.stop();
-			thrustersPlaying = false;
+		if (!up && !down && sound.thrustersPlaying) {
+			sound.thrustersSound.stop();
+			sound.thrustersPlaying = false;
 		}
 	}
 
@@ -800,7 +696,7 @@ public class main extends Applet implements Runnable, KeyListener {
 		offGraphics.drawString("Ships: " + ship.shipsLeft, fontWidth, d.height - fontHeight);
 		s = "High: " + highScore;
 		offGraphics.drawString(s, d.width - (fontWidth + fm.stringWidth(s)), fontHeight);
-		if (!sound) {
+		if (!sound.getSound()) {
 			s = "Mute";
 			offGraphics.drawString(s, d.width - (fontWidth + fm.stringWidth(s)), d.height - fontHeight);
 		}
@@ -823,8 +719,8 @@ public class main extends Applet implements Runnable, KeyListener {
 				offGraphics.setColor(Color.black);
 				offGraphics.fillRect(x, y, w, h);
 				offGraphics.setColor(Color.gray);
-				if (clipTotal > 0)
-					offGraphics.fillRect(x, y, (int) (w * clipsLoaded / clipTotal), h);
+				if (sound.getClipTotal() > 0)
+					offGraphics.fillRect(x, y, (int) (w * sound.getClipsLoaded() / sound.getClipTotal()), h);
 				offGraphics.setColor(Color.white);
 				offGraphics.drawRect(x, y, w, h);
 				offGraphics.drawString(s, x + 2 * fontWidth, y + fm.getMaxAscent());

@@ -18,9 +18,9 @@ public class Missle {
 		missle.deltaY = 0.0;
 		missle.render();
 		missleCounter = Constants.MISSLE_COUNT;
-		if (main.sound)
-			main.missleSound.loop();
-		main.misslePlaying = true;
+		if (main.sound.getSound())
+			main.sound.missleSound.loop();
+		main.sound.misslePlaying = true;
 	}
 
 	public void updateMissle() {
@@ -39,16 +39,16 @@ public class Missle {
 				missle.render();
 				for (i = 0; i < Constants.MAX_SHOTS; i++)
 					if (main.photons.photons[i].active && missle.isColliding(main.photons.photons[i])) {
-						if (main.sound)
-							main.crashSound.play();
+						if (main.sound.getSound())
+							main.sound.crashSound.play();
 						main.explosions.explode(missle);
 						stopMissle();
 						main.score += Constants.MISSLE_POINTS;
 					}
 				if (missle.active && main.ship.ship.active && main.ship.hyperCounter <= 0
 						&& main.ship.ship.isColliding(missle)) {
-					if (main.sound)
-						main.crashSound.play();
+					if (main.sound.getSound())
+						main.sound.crashSound.play();
 					main.explosions.explode(main.ship.ship);
 					main.ship.stopShip();
 					main.ufo.stopUfo();
@@ -99,8 +99,8 @@ public class Missle {
 		missle.active = false;
 		missleCounter = 0;
 		if (main.loaded)
-			main.missleSound.stop();
-		main.misslePlaying = false;
+			main.sound.missleSound.stop();
+		main.sound.misslePlaying = false;
 	}
 
 }

@@ -134,8 +134,8 @@ public class Asteroids {
 						asteroidsLeft--;
 						asteroids[i].active = false;
 						main.photons.photons[j].active = false;
-						if (main.sound)
-							main.explosionSound.play();
+						if (main.sound.getSound())
+							main.sound.explosionSound.play();
 						 main.explosions.explode(asteroids[i]);
 						if (!asteroidIsSmall[i]) {
 							main.score += Constants.BIG_POINTS;
@@ -147,8 +147,8 @@ public class Asteroids {
 				// If the ship is not in hyperspace, see if it is hit.
 
 				if (main.ship.ship.active && main.ship.hyperCounter <= 0 && asteroids[i].active && asteroids[i].isColliding(main.ship.ship)) {
-					if (main.sound)
-						main.crashSound.play();
+					if (main.sound.getSound())
+						main.sound.crashSound.play();
 					main.explosions.explode(main.ship.ship);
 					main.ship.stopShip();
 					main.ufo.stopUfo();
