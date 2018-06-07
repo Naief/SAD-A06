@@ -27,9 +27,9 @@ public class Ufo {
 		if (ufo.y > 0)
 			ufo.deltaY = ufo.deltaY;
 		ufo.render();
-		main.saucerPlaying = true;
-		if (main.sound)
-			main.saucerSound.loop();
+		Sound.saucerPlaying = true;
+		if (main.sound.getSound())
+			main.sound.saucerSound.loop();
 		ufoCounter = (int) Math.abs(AsteroidsSprite.width / ufo.deltaX);
 	}
 
@@ -53,8 +53,8 @@ public class Ufo {
 				ufo.render();
 				for (i = 0; i < Constants.MAX_SHOTS; i++)
 					if (main.photons.photons[i].active && ufo.isColliding(main.photons.photons[i])) {
-						if (main.sound)
-							main.crashSound.play();
+						if (main.sound.getSound())
+							main.sound.crashSound.play();
 						main.explosions.explode(ufo);
 						stopUfo();
 						main.score += Constants.UFO_POINTS;
@@ -78,8 +78,8 @@ public class Ufo {
 		ufoCounter = 0;
 		ufoPassesLeft = 0;
 		if (main.loaded)
-			main.saucerSound.stop();
-		main.saucerPlaying = false;
+			main.sound.saucerSound.stop();
+		main.sound.saucerPlaying = false;
 	}
 
 }

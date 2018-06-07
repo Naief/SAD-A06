@@ -87,13 +87,13 @@ public class main extends Applet implements Runnable, KeyListener {
 	static Ufo ufo = new Ufo();
 	static Missle missle = new Missle();
 	static Ship ship = new Ship();
+	static Sound sound = new Sound();
 
 	// Flags for game state and options.
 
 	static boolean loaded = false;
 	static boolean paused;
 	static boolean playing;
-	static boolean sound;
 
 	// Key flags.
 
@@ -203,7 +203,7 @@ public class main extends Applet implements Runnable, KeyListener {
 		// Initialize game data and put us in 'game over' mode.
 
 		highScore = 0;
-		sound = true;
+		sound.setSound(true);
 		explosions.detail = true;
 		initGame();
 		endGame();
@@ -225,6 +225,7 @@ public class main extends Applet implements Runnable, KeyListener {
 	    missle.stopMissle();
 	    asteroids.initAsteroids();
 	    explosions.initExplosions();
+	    sound.loadSounds();
 	    playing = true;
 	    paused = false;
 	    photons.photonTime = System.currentTimeMillis();
@@ -239,6 +240,7 @@ public class main extends Applet implements Runnable, KeyListener {
 		    ship.stopShip();
 		    ufo.stopUfo();
 		    missle.stopMissle();
+		    sound.stopAllSound();
 	}
 
 	public void updateShip() {
@@ -364,7 +366,7 @@ public class main extends Applet implements Runnable, KeyListener {
 		// Run thread for loading sounds.
 
 		if (!loaded && Thread.currentThread() == loadThread) {
-			loadSounds();
+			sound.loadSounds();
 			loaded = true;
 			loadThread.stop();
 		}
@@ -420,71 +422,6 @@ public class main extends Applet implements Runnable, KeyListener {
 		    }
 
 
-
-	public void loadSounds() {
-
-		// Load all sound clips by playing and immediately stopping them. Update
-		// counter and total for display.
-
-		try {
-			crashSound = getAudioClip(new URL(getCodeBase(), "crash.au"));
-			clipTotal++;
-			explosionSound = getAudioClip(new URL(getCodeBase(), "explosion.au"));
-			clipTotal++;
-			fireSound = getAudioClip(new URL(getCodeBase(), "fire.au"));
-			clipTotal++;
-			missleSound = getAudioClip(new URL(getCodeBase(), "missle.au"));
-			clipTotal++;
-			saucerSound = getAudioClip(new URL(getCodeBase(), "saucer.au"));
-			clipTotal++;
-			thrustersSound = getAudioClip(new URL(getCodeBase(), "thrusters.au"));
-			clipTotal++;
-			warpSound = getAudioClip(new URL(getCodeBase(), "warp.au"));
-			clipTotal++;
-		} catch (MalformedURLException e) {
-		}
-
-		try {
-			crashSound.play();
-			crashSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			explosionSound.play();
-			explosionSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			fireSound.play();
-			fireSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			missleSound.play();
-			missleSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			saucerSound.play();
-			saucerSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			thrustersSound.play();
-			thrustersSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-			warpSound.play();
-			warpSound.stop();
-			clipsLoaded++;
-			repaint();
-			Thread.currentThread().sleep(Constants.DELAY);
-		} catch (InterruptedException e) {
-		}
-	}
-
-
 	public void keyPressed(KeyEvent e) {
 
 		char c;
@@ -500,17 +437,17 @@ public class main extends Applet implements Runnable, KeyListener {
 		if (e.getKeyCode() == KeyEvent.VK_DOWN)
 			down = true;
 
-		if ((up || down) && ship.ship.active && !thrustersPlaying) {
-			if (sound && !paused)
-				thrustersSound.loop();
-			thrustersPlaying = true;
+		if ((up || down) && ship.ship.active && !sound.thrustersPlaying) {
+			if (sound.getSound() && !paused)
+				sound.thrustersSound.loop();
+			sound.thrustersPlaying = true;
 		}
 
 		// Spacebar: fire a photon and start its counter.
 
 		if (e.getKeyChar() == ' ' && ship.ship.active) {
-			if (sound & !paused)
-				fireSound.play();
+			if (sound.getSound() & !paused)
+				sound.fireSound.play();
 			  photons.photonTime = System.currentTimeMillis();
 		      photons.photonIndex++;
 		      if ( photons.photonIndex >= Constants.MAX_SHOTS)
@@ -534,52 +471,32 @@ public class main extends Applet implements Runnable, KeyListener {
 		    	ship.ship.x = Math.random() * AsteroidsSprite.width;
 		    	ship.ship.y = Math.random() * AsteroidsSprite.height;
 		      ship.hyperCounter = Constants.HYPER_COUNT;
-		      if (sound & !paused)
-		        warpSound.play();
+		      if (sound.getSound() & !paused)
+		        sound.warpSound.play();
 		    }
 
 		// 'P' key: toggle pause mode and start or stop any active looping sound
 		// clips.
 
 		if (c == 'p') {
-			if (paused) {
-				if (sound && misslePlaying)
-					missleSound.loop();
-				if (sound && saucerPlaying)
-					saucerSound.loop();
-				if (sound && thrustersPlaying)
-					thrustersSound.loop();
-			} else {
-				if (misslePlaying)
-					missleSound.stop();
-				if (saucerPlaying)
-					saucerSound.stop();
-				if (thrustersPlaying)
-					thrustersSound.stop();
-			}
+			sound.pause(paused);
 			paused = !paused;
 		}
 
 		// 'M' key: toggle sound on or off and stop any looping sound clips.
 
 		if (c == 'm' && loaded) {
-			if (sound) {
-				crashSound.stop();
-				explosionSound.stop();
-				fireSound.stop();
-				missleSound.stop();
-				saucerSound.stop();
-				thrustersSound.stop();
-				warpSound.stop();
+			if (sound.getSound()) {
+				sound.stopAllSound();
 			} else {
-				if (misslePlaying && !paused)
-					missleSound.loop();
-				if (saucerPlaying && !paused)
-					saucerSound.loop();
-				if (thrustersPlaying && !paused)
-					thrustersSound.loop();
+				if (sound.misslePlaying && !paused)
+					sound.missleSound.loop();
+				if (sound.saucerPlaying && !paused)
+					sound.saucerSound.loop();
+				if (sound.thrustersPlaying && !paused)
+					sound.thrustersSound.loop();
 			}
-			sound = !sound;
+			sound.setSound(!sound.getSound());
 		}
 
 		// 'D' key: toggle graphics detail on or off.
@@ -614,9 +531,9 @@ public class main extends Applet implements Runnable, KeyListener {
 		if (e.getKeyCode() == KeyEvent.VK_DOWN)
 			down = false;
 
-		if (!up && !down && thrustersPlaying) {
-			thrustersSound.stop();
-			thrustersPlaying = false;
+		if (!up && !down && sound.thrustersPlaying) {
+			sound.thrustersSound.stop();
+			sound.thrustersPlaying = false;
 		}
 	}
 
@@ -625,7 +542,172 @@ public class main extends Applet implements Runnable, KeyListener {
 
 	public void update(Graphics g) {
 		Dimension d = getSize();
+<<<<<<< HEAD
 		graphics.paint(g, explosions, photons, missle, asteroids, ufo, ship, d, playing, paused, up, down, loaded, sound);
+=======
+		int i;
+		int c;
+		String s;
+		int w, h;
+		int x, y;
+
+		// Create the off screen graphics context, if no good one exists.
+
+		if (offGraphics == null || d.width != offDimension.width || d.height != offDimension.height) {
+			offDimension = d;
+			offImage = createImage(d.width, d.height);
+			offGraphics = offImage.getGraphics();
+		}
+
+		// Fill in background and stars.
+
+		offGraphics.setColor(Color.black);
+		offGraphics.fillRect(0, 0, d.width, d.height);
+		if (explosions.detail) {
+			offGraphics.setColor(Color.white);
+			for (i = 0; i < numStars; i++)
+				offGraphics.drawLine(stars[i].x, stars[i].y, stars[i].x, stars[i].y);
+		}
+
+		// Draw photon bullets.
+
+		offGraphics.setColor(Color.white);
+		for (i = 0; i < Constants.MAX_SHOTS; i++)
+			if (photons.photons[i].active)
+				offGraphics.drawPolygon(Photons.photons[i].sprite);
+
+		// Draw the guided missle, counter is used to quickly fade color to black
+		// when near expiration.
+
+		c = Math.min(missle.missleCounter * 24, 255);
+		offGraphics.setColor(new Color(c, c, c));
+		if (missle.missle.active) {
+			   offGraphics.drawPolygon(missle.missle.sprite);
+			      offGraphics.drawLine(missle.missle.sprite.xpoints[missle.missle.sprite.npoints - 1], missle.missle.sprite.ypoints[missle.missle.sprite.npoints - 1],
+			    		  missle.missle.sprite.xpoints[0], missle.missle.sprite.ypoints[0]);
+			    
+		}
+
+		// Draw the asteroids.
+
+		 for (i = 0; i < Constants.MAX_ROCKS; i++)
+		      if (asteroids.asteroids[i].active) {
+		        if (explosions.detail) {
+		          offGraphics.setColor(Color.black);
+		          offGraphics.fillPolygon(asteroids.asteroids[i].sprite);
+		        }
+		        offGraphics.setColor(Color.white);
+		        offGraphics.drawPolygon(asteroids.asteroids[i].sprite);
+		        offGraphics.drawLine(asteroids.asteroids[i].sprite.xpoints[asteroids.asteroids[i].sprite.npoints - 1], asteroids.asteroids[i].sprite.ypoints[asteroids.asteroids[i].sprite.npoints - 1],
+		        		asteroids.asteroids[i].sprite.xpoints[0], asteroids.asteroids[i].sprite.ypoints[0]);
+		      }
+
+		// Draw the flying saucer.
+
+		 if (ufo.ufo.active) {
+		      if (explosions.detail) {
+		        offGraphics.setColor(Color.black);
+		        offGraphics.fillPolygon(ufo.ufo.sprite);
+		      }
+		      offGraphics.setColor(Color.white);
+		      offGraphics.drawPolygon(ufo.ufo.sprite);
+		      offGraphics.drawLine(ufo.ufo.sprite.xpoints[ufo.ufo.sprite.npoints - 1], ufo.ufo.sprite.ypoints[ufo.ufo.sprite.npoints - 1],
+		    		  ufo.ufo.sprite.xpoints[0], ufo.ufo.sprite.ypoints[0]);
+		    }
+
+
+		// Draw the ship, counter is used to fade color to white on hyperspace.
+
+		  if (ship.ship.active) {
+		      if (explosions.detail && ship.hyperCounter == 0) {
+		        offGraphics.setColor(Color.black);
+		        offGraphics.fillPolygon(ship.ship.sprite);
+		      }
+		      offGraphics.setColor(new Color(c, c, c));
+		      offGraphics.drawPolygon(ship.ship.sprite);
+		      offGraphics.drawLine(ship.ship.sprite.xpoints[ship.ship.sprite.npoints - 1], ship.ship.sprite.ypoints[ship.ship.sprite.npoints - 1],
+		    		  ship.ship.sprite.xpoints[0], ship.ship.sprite.ypoints[0]);
+		      
+			// Draw thruster exhaust if thrusters are on. Do it randomly to get a
+			// flicker effect.
+
+			if (!paused && explosions.detail && Math.random() < 0.5) {
+				if (up) {
+					offGraphics.drawPolygon(ship.fwdThruster.sprite);
+					offGraphics.drawLine(ship.fwdThruster.sprite.xpoints[ship.fwdThruster.sprite.npoints - 1],
+							ship.fwdThruster.sprite.ypoints[ship.fwdThruster.sprite.npoints - 1], ship.fwdThruster.sprite.xpoints[0],
+							ship.fwdThruster.sprite.ypoints[0]);
+				}
+				if (down) {
+					offGraphics.drawPolygon(ship.revThruster.sprite);
+					offGraphics.drawLine(ship.revThruster.sprite.xpoints[ship.revThruster.sprite.npoints - 1],
+							ship.revThruster.sprite.ypoints[ship.revThruster.sprite.npoints - 1], ship.revThruster.sprite.xpoints[0],
+							ship.revThruster.sprite.ypoints[0]);
+				}
+			}
+		}
+
+		// Draw any explosion debris, counters are used to fade color to black.
+
+		    for (i = 0; i < Constants.MAX_SCRAP; i++)
+		      if (explosions.explosions[i].active) {
+		        c = (255 / Constants.SCRAP_COUNT) * explosions.explosionCounter [i];
+		        offGraphics.setColor(new Color(c, c, c));
+		        offGraphics.drawPolygon(explosions.explosions[i].sprite);
+		      } 
+		    
+		// Display status and messages.
+
+		offGraphics.setFont(font);
+		offGraphics.setColor(Color.white);
+
+		offGraphics.drawString("Score: " + score, fontWidth, fontHeight);
+		offGraphics.drawString("Ships: " + ship.shipsLeft, fontWidth, d.height - fontHeight);
+		s = "High: " + highScore;
+		offGraphics.drawString(s, d.width - (fontWidth + fm.stringWidth(s)), fontHeight);
+		if (!sound.getSound()) {
+			s = "Mute";
+			offGraphics.drawString(s, d.width - (fontWidth + fm.stringWidth(s)), d.height - fontHeight);
+		}
+
+		if (!playing) {
+			s = copyName;
+			offGraphics.drawString(s, (d.width - fm.stringWidth(s)) / 2, d.height / 2 - 2 * fontHeight);
+			s = copyVers;
+			offGraphics.drawString(s, (d.width - fm.stringWidth(s)) / 2, d.height / 2 - fontHeight);
+			s = copyInfo;
+			offGraphics.drawString(s, (d.width - fm.stringWidth(s)) / 2, d.height / 2 + fontHeight);
+			s = copyLink;
+			offGraphics.drawString(s, (d.width - fm.stringWidth(s)) / 2, d.height / 2 + 2 * fontHeight);
+			if (!loaded) {
+				s = "Loading sounds...";
+				w = 4 * fontWidth + fm.stringWidth(s);
+				h = fontHeight;
+				x = (d.width - w) / 2;
+				y = 3 * d.height / 4 - fm.getMaxAscent();
+				offGraphics.setColor(Color.black);
+				offGraphics.fillRect(x, y, w, h);
+				offGraphics.setColor(Color.gray);
+				if (sound.getClipTotal() > 0)
+					offGraphics.fillRect(x, y, (int) (w * sound.getClipsLoaded() / sound.getClipTotal()), h);
+				offGraphics.setColor(Color.white);
+				offGraphics.drawRect(x, y, w, h);
+				offGraphics.drawString(s, x + 2 * fontWidth, y + fm.getMaxAscent());
+			} else {
+				s = "Game Over";
+				offGraphics.drawString(s, (d.width - fm.stringWidth(s)) / 2, d.height / 4);
+				s = "'S' to Start";
+				offGraphics.drawString(s, (d.width - fm.stringWidth(s)) / 2, d.height / 4 + fontHeight);
+			}
+		} else if (paused) {
+			s = "Game Paused";
+			offGraphics.drawString(s, (d.width - fm.stringWidth(s)) / 2, d.height / 4);
+		}
+
+		// Copy the off screen buffer to the screen.
+
+		g.drawImage(offImage, 0, 0, this);
+>>>>>>> e36652db1a19423bab6cb13969dd29242f11d0ab
 	}
 
 }
